@@ -321,7 +321,7 @@ class scoreboard_ingame:
         self.game = game
 
 if __name__ == "__main__":
-    scoreboard = scoreboard_ingame("white", screen.get_width(), win_threshold, name_input)
+    scoreboard_instance = scoreboard_ingame("white", screen.get_width(), win_threshold, name_input)
 
 class pause_menu:
     def __init__(self, botmatch, surface, screen_width, screen_height):
@@ -351,7 +351,7 @@ class pause_menu:
     def render(self, paused):
         screen.fill("black")
         self.paused = paused
-        # mouse_pos = pygame.mouse.get_pos()
+        mouse_pos = pygame.mouse.get_pos()
 
         bot_rect    = pygame.Rect(self.screen_width/2 - 350, self.screen_height/2, 200, 100)
         two_rect    = pygame.Rect(self.screen_width/2 - 100, self.screen_height/2, 200, 100)
@@ -466,7 +466,7 @@ class pause_menu:
                     if self.bot_button.collidepoint(pygame.mouse.get_pos()):
                         self.botmatch = True
                         self.show_difficulty = True
-                        scoreboard.set_game("Pong")
+                        scoreboard_instance.set_game("Pong")
 
                     elif self.twoplayer_button.collidepoint(pygame.mouse.get_pos()):
                         self.botmatch = False
@@ -476,7 +476,7 @@ class pause_menu:
                             name_input.playernames[1] = ""
                         name_input.input_name(1)
                         game_ball.reset("random")
-                        scoreboard.set_game("Pong")
+                        scoreboard_instance.set_game("Pong")
 
                     elif self.online_multiplayer_button.collidepoint(pygame.mouse.get_pos()):
                         self.botmatch = False
@@ -488,7 +488,7 @@ class pause_menu:
                         render_connection_info("Looking for server")
                         threading.Thread(target=network_discovery.look_for_server, daemon=True).start()
                         game_ball.reset("random")
-                        scoreboard.set_game("Pong Multiplayer")
+                        scoreboard_instance.set_game("Pong Multiplayer")
                         self.paused = False
 
                     if self.difficulty_button1.collidepoint(pygame.mouse.get_pos()):
@@ -767,7 +767,7 @@ class Client:
                 bat2.set_position(game_state["bat2_y"])
                 game_ball.set_position(game_state["ball_pos"])
                 game_ball.set_direction(game_state["ball_direction"])
-                scoreboard.update_score(game_state["score1"], game_state["score2"])
+                scoreboard_instance.update_score(game_state["score1"], game_state["score2"])
                 name_input.set_names(0, game_state["player_name1"])
                 name_input.set_names(1, game_state["player_name2"])
 
@@ -912,9 +912,9 @@ class Server:
                     name_input.set_names(1, client_update["player_name_client"])
 
                 winner = None
-                if scoreboard.get_score()[0] >= scoreboard.win_threshold:
+                if scoreboard_instance.get_score()[0] >= scoreboard_instance.win_threshold:
                     winner = "left"
-                elif scoreboard.get_score()[1] >= scoreboard.win_threshold:
+                elif scoreboard_instance.get_score()[1] >= scoreboard_instance.win_threshold:
                     winner = "right"
 
                 game_state = {
@@ -922,8 +922,8 @@ class Server:
                     "bat2_y": bat2.get_position(),
                     "ball_pos": game_ball.get_position(),
                     "ball_direction": game_ball.get_direction(),
-                    "score1": scoreboard.get_score()[0],
-                    "score2": scoreboard.get_score()[1],
+                    "score1": scoreboard_instance.get_score()[0],
+                    "score2": scoreboard_instance.get_score()[1],
                     "paused": self.paused,
                     "winner": win_overlay["winner"],
                     "player_name1": name_input.get_names()[1],
@@ -1008,7 +1008,7 @@ def singleplayer_mode(type):
     win_overlay = {"winner": None, "until": 1.0, "saved": False}
 
     pausemenu.botmatch = True
-    scoreboard.set_game("Pong")
+    scoreboard_instance.set_game("Pong")
     name_input.set_names(1, "Bot")
     game_ball.reset("random")
 
@@ -1173,20 +1173,20 @@ if __name__ == "__main__":
                 is_out_right = game_ball.is_out_right()
 
                 if is_out_left:
-                    current_score = scoreboard.get_score()
-                    scoreboard.update_score(current_score[0], current_score[1] + 1)
+                    current_score = scoreboard_instance.get_score()
+                    scoreboard_instance.update_score(current_score[0], current_score[1] + 1)
                     game_ball.reset(True)
 
                 if is_out_right:
-                    current_score = scoreboard.get_score()
-                    scoreboard.update_score(current_score[0] + 1, current_score[1])
+                    current_score = scoreboard_instance.get_score()
+                    scoreboard_instance.update_score(current_score[0] + 1, current_score[1])
                     game_ball.reset(False)
 
                 if win_overlay["winner"] is None:
-                    s1, s2 = scoreboard.get_score()
-                    if s1 >= scoreboard.win_threshold:
+                    s1, s2 = scoreboard_instance.get_score()
+                    if s1 >= scoreboard_instance.win_threshold:
                         win_overlay.update({"winner": "left", "until": time.time() + 1.5, "saved": False})
-                    elif s2 >= scoreboard.win_threshold:
+                    elif s2 >= scoreboard_instance.win_threshold:
                         win_overlay.update({"winner": "right", "until": time.time() + 1.5, "saved": False})
 
                 if pausemenu.is_bot_match():
@@ -1201,7 +1201,7 @@ if __name__ == "__main__":
         else:
             bat2.draw(screen)
 
-        scoreboard.draw(screen)
+        scoreboard_instance.draw(screen)
 
         if (is_net_host() or is_multiplayer or pausemenu.is_bot_match()) and win_overlay["winner"]:
             draw_win_overlay(win_overlay["winner"])
@@ -1213,14 +1213,14 @@ if __name__ == "__main__":
                     names = name_input.get_names()
 
                     if win_overlay["winner"] == "left":
-                        scoreboard.write_to_database(names[0], 1, 1)
-                        scoreboard.write_to_database(names[1], 0, 1)
+                        scoreboard_instance.write_to_database(names[0], 1, 1)
+                        scoreboard_instance.write_to_database(names[1], 0, 1)
                     else:
-                        scoreboard.write_to_database(names[0], 0, 1)
-                        scoreboard.write_to_database(names[1], 1, 1)
+                        scoreboard_instance.write_to_database(names[0], 0, 1)
+                        scoreboard_instance.write_to_database(names[1], 1, 1)
 
                     win_overlay["saved"] = True
-                scoreboard.reset_score()
+                scoreboard_instance.reset_score()
                 game_ball.reset("random")
                 win_overlay.update({"winner": None, "until": 0.0, "saved": False})
                 game_paused = False
